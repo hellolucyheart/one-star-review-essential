@@ -19,6 +19,18 @@ REVIEW = (
 MAX_CHARS = 160
 
 
+def resolve_output_dir() -> str:
+    """Pick the output directory: the grader's env var first, then
+    /output, then a local ./output fallback so the program also runs
+    outside the sandbox without an env var set."""
+    env_dir = os.environ.get("MAKEFUN_OUTPUT_DIR")
+    if env_dir:
+        return env_dir
+    if os.path.isdir("/output") and os.access("/output", os.W_OK):
+        return "/output"
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
+
+
 def main() -> int:
     text = REVIEW.strip()
     if not text or len(text) > MAX_CHARS or text != text.strip():
@@ -27,7 +39,7 @@ def main() -> int:
     if "\n" in text or "\r" in text:
         print("review must be a single line", file=sys.stderr)
         return 1
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    out_dir = resolve_output_dir()
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "entry.txt")
     with open(out_path, "w", encoding="utf-8", newline="") as handle:
